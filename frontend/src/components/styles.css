@@ -12,7 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+    
 }
 
 /* Main container styling */
@@ -59,7 +59,7 @@ input[type="file"] {
 }
 
 input[type="file"]:hover {
-    background: #e2e6ea;
+    background: #153c64;
 }
 
 /* Text Display */
@@ -73,7 +73,7 @@ p {
 }
 
 /* Button Styling */
-button {
+/*button {
     background: #007bff;
     color: white;
     border: none;
@@ -84,7 +84,7 @@ button {
     transition: 0.3s;
     margin-top: 10px;
 }
-
+*/
 button:hover {
     background: #0056b3;
 }
