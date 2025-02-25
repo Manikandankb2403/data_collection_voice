@@ -3,42 +3,67 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const router = express.Router();
-const textsFilePath = path.join(__dirname, "../data/texts.json");
+const dataFolderPath = path.join(__dirname, "../data");
 
-// Get texts from JSON
-router.get("/", (req, res) => {
-    if (!fs.existsSync(textsFilePath)) {
-        fs.writeJsonSync(textsFilePath, []);
-    }
+// Ensure the data folder exists
+fs.ensureDirSync(dataFolderPath);
 
-    const texts = fs.readJsonSync(textsFilePath);
-    console.log("📜 Current texts:", texts);
-    res.json(texts);
-});
-
-// Upload new texts.json file
-router.post("/upload", async (req, res) => {
+// ✅ Upload user-specific JSON file
+router.post("/upload/:userId", async (req, res) => {
     try {
-        console.log("📤 Uploading new text file...");
-        await fs.writeJson(textsFilePath, req.body.texts);
-        console.log("✅ Texts updated successfully");
-        res.json({ message: "Texts uploaded successfully" });
+        const userId = req.params.userId;
+        if (!userId) return res.status(400).json({ error: "User ID is required!" });
+
+        const userFilePath = path.join(dataFolderPath, `user${userId}.json`);
+        console.log(`📤 Uploading texts for user ${userId}...`);
+
+        await fs.writeJson(userFilePath, req.body.texts);
+        console.log(`✅ Texts uploaded successfully for user ${userId}`);
+
+        res.json({ message: `Texts uploaded successfully for user ${userId}` });
     } catch (error) {
         console.error("❌ Error saving texts:", error);
         res.status(500).json({ error: "Error saving texts" });
     }
 });
 
-// Remove first text after recording
-router.delete("/remove-first", async (req, res) => {
+// ✅ Get texts for a specific user
+router.get("/:userId", (req, res) => {
     try {
-        const texts = fs.readJsonSync(textsFilePath);
-        if (texts.length > 0) {
-            console.log("🗑 Removing first text:", texts[0]);
-            texts.shift();
-            await fs.writeJson(textsFilePath, texts);
+        const userId = req.params.userId;
+        if (!userId) return res.status(400).json({ error: "User ID is required!" });
+
+        const userFilePath = path.join(dataFolderPath, `user${userId}.json`);
+        if (!fs.existsSync(userFilePath)) {
+            fs.writeJsonSync(userFilePath, []);
         }
-        res.json({ message: "First text removed" });
+
+        const texts = fs.readJsonSync(userFilePath);
+        console.log(`📜 Current texts for user ${userId}:`, texts);
+        res.json(texts);
+    } catch (error) {
+        console.error("❌ Error retrieving texts:", error);
+        res.status(500).json({ error: "Error retrieving texts" });
+    }
+});
+
+// ✅ Remove the first text after recording (for a specific user)
+router.delete("/remove-first/:userId", async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        if (!userId) return res.status(400).json({ error: "User ID is required!" });
+
+        const userFilePath = path.join(dataFolderPath, `user${userId}.json`);
+        if (!fs.existsSync(userFilePath)) return res.status(404).json({ error: "User file not found!" });
+
+        const texts = fs.readJsonSync(userFilePath);
+        if (texts.length > 0) {
+            console.log(`🗑 Removing first text for user ${userId}:`, texts[0]);
+            texts.shift();
+            await fs.writeJson(userFilePath, texts);
+        }
+
+        res.json({ message: `First text removed for user ${userId}` });
     } catch (error) {
         console.error("❌ Error removing text:", error);
         res.status(500).json({ error: "Error removing text" });
@@ -46,4 +71,3 @@ router.delete("/remove-first", async (req, res) => {
 });
 
 module.exports = router;
-//
