@@ -85,27 +85,28 @@ const Recorder = () => {
 
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
 
-        try {
-            const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
-        
-            // ✅ Use the uploaded JSON filename instead of "Voice Dataset"
-            if (!userFile) {
-                alert("⚠ Please upload a JSON file first!");
-                return;
-            }
-            
-            const fileNameWithoutExt = userFile.replace(/\.[^/.]+$/, ""); // Remove file extension
-            const userDataset = await audioDataset.getDirectoryHandle(fileNameWithoutExt, { create: true });
-        
-            const fileHandle = await userDataset.getFileHandle(`${currentText.id}.wav`, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(audioBlob);
-            await writable.close();
-        
-            console.log(`✅ Audio saved as: ${fileNameWithoutExt}/${currentText.id}.wav`);
-        } catch (error) {
-            console.error("❌ Error saving file:", error);
+        // ✅ Create Folder (`AudioDataset/{Uploaded JSON Filename}`)
+const createFolder = async () => {
+    try {
+        folderHandle.current = await window.showDirectoryPicker();
+        const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
+
+        if (!userFile) {
+            alert("⚠ Please upload a JSON file first!");
+            return;
         }
+
+        // ✅ Extract filename without extension
+        const fileNameWithoutExt = userFile.replace(/\.[^/.]+$/, ""); 
+
+        const userDataset = await audioDataset.getDirectoryHandle(fileNameWithoutExt, { create: true });
+
+        setFolderCreated(true);
+        console.log(`✅ Folder created: AudioDataset/${fileNameWithoutExt}`);
+    } catch (error) {
+        console.error("❌ Folder creation failed:", error);
+    }
+
         setTexts((prev) => prev.slice(1));
         setCurrentText(texts[1]);
 
