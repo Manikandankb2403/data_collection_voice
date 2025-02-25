@@ -87,18 +87,25 @@ const Recorder = () => {
 
         try {
             const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
-            const voiceDataset = await audioDataset.getDirectoryHandle("Voice Dataset", { create: true });
-
-            const fileHandle = await voiceDataset.getFileHandle(`${currentText.id}.wav`, { create: true });
+        
+            // ✅ Use the uploaded JSON filename instead of "Voice Dataset"
+            if (!userFile) {
+                alert("⚠ Please upload a JSON file first!");
+                return;
+            }
+            
+            const fileNameWithoutExt = userFile.replace(/\.[^/.]+$/, ""); // Remove file extension
+            const userDataset = await audioDataset.getDirectoryHandle(fileNameWithoutExt, { create: true });
+        
+            const fileHandle = await userDataset.getFileHandle(`${currentText.id}.wav`, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(audioBlob);
             await writable.close();
-
-            console.log(`✅ Audio saved as: ${currentText.id}.wav`);
+        
+            console.log(`✅ Audio saved as: ${fileNameWithoutExt}/${currentText.id}.wav`);
         } catch (error) {
             console.error("❌ Error saving file:", error);
         }
-
         setTexts((prev) => prev.slice(1));
         setCurrentText(texts[1]);
 
