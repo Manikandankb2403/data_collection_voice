@@ -11,6 +11,7 @@ const Recorder = () => {
     const [userFile, setUserFile] = useState(null);
     const mediaRecorderRef = useRef(null);
     let folderHandle = useRef(null);
+    const [folderCreated, setFolderCreated] = useState(false);
 
     // ✅ Handle User JSON Upload
     const handleJsonUpload = async (e) => {
@@ -37,26 +38,26 @@ const Recorder = () => {
 
     // ✅ Create Folder (`AudioDataset/Voice Dataset`)
     // ✅ Create Folder (`AudioDataset/{Uploaded JSON Filename}`)
-const createFolder = async () => {
-    try {
-        if (!userFile) {
-            alert("⚠ Please upload a JSON file first!");
-            return;
+    const createFolder = async () => {
+        try {
+            if (!userFile) {
+                alert("⚠ Please upload a JSON file first!");
+                return;
+            }
+    
+            folderHandle.current = await window.showDirectoryPicker();
+            const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
+    
+            // ✅ Use JSON filename as folder name
+            const fileNameWithoutExt = userFile.replace(/\.[^/.]+$/, ""); // Remove file extension
+            const userDataset = await audioDataset.getDirectoryHandle(fileNameWithoutExt, { create: true });
+    
+            setFolderCreated(true); // ✅ Now `setFolderCreated` is defined!
+            console.log(`✅ Folder created: AudioDataset/${fileNameWithoutExt}`);
+        } catch (error) {
+            console.error("❌ Folder creation failed:", error);
         }
-
-        folderHandle.current = await window.showDirectoryPicker();
-        const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
-
-        // ✅ Use JSON filename as folder name
-        const fileNameWithoutExt = userFile.replace(/\.[^/.]+$/, ""); // Remove file extension
-        const userDataset = await audioDataset.getDirectoryHandle(fileNameWithoutExt, { create: true });
-
-        setFolderCreated(true);
-        console.log(`✅ Folder created: AudioDataset/${fileNameWithoutExt}`);
-    } catch (error) {
-        console.error("❌ Folder creation failed:", error);
-    }
-};
+    };    
     // ✅ Start/Stop Recording
     const toggleRecording = async () => {
         if (!recording) {
