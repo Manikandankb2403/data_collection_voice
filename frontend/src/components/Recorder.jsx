@@ -15,12 +15,12 @@ const Recorder = () => {
 
     // ✅ Load Texts and Recorded Files on Page Load
     useEffect(() => {
-        axios.get("http://localhost:3000/texts").then((res) => {
+        axios.get("https://data-collection-voice-backend.onrender.com/texts").then((res) => {
             setTexts(res.data);
             setCurrentText(res.data.length > 0 ? res.data[0] : null);
         });
 
-        axios.get("http://localhost:3000/audio/files").then((res) => {
+        axios.get("https://data-collection-voice-backend.onrender.com/audio/files").then((res) => {
             setRecordedFiles(res.data);
         });
     }, []);
@@ -34,7 +34,7 @@ const Recorder = () => {
         reader.onload = async (event) => {
             try {
                 const data = JSON.parse(event.target.result);
-                await axios.post("http://localhost:3000/texts/upload", { texts: data });
+                await axios.post("https://data-collection-voice-backend.onrender.com/texts/upload", { texts: data });
 
                 setTexts(data);
                 setCurrentText(data.length > 0 ? data[0] : null);
@@ -113,7 +113,7 @@ const Recorder = () => {
             console.error("❌ Error saving file:", error);
         }
 
-        await axios.delete("http://localhost:3000/texts/remove-first");
+        await axios.delete("https://data-collection-voice-backend.onrender.com/texts/remove-first");
         setTexts((prev) => prev.slice(1));
         setCurrentText(texts[1]);
 
