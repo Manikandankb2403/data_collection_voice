@@ -8,38 +8,25 @@ const Recorder = () => {
     const [recording, setRecording] = useState(false);
     const [audioChunks, setAudioChunks] = useState([]);
     const [audioUrl, setAudioUrl] = useState(null);
-    const [recordedFiles, setRecordedFiles] = useState([]);
-    const [folderCreated, setFolderCreated] = useState(false);
+    const [userFile, setUserFile] = useState(null);
     const mediaRecorderRef = useRef(null);
     let folderHandle = useRef(null);
 
-    // ✅ Load Texts and Recorded Files on Page Load
-    useEffect(() => {
-        axios.get("https://data-collection-voice-backend.onrender.com/texts").then((res) => {
-            setTexts(res.data);
-            setCurrentText(res.data.length > 0 ? res.data[0] : null);
-        });
-
-        axios.get("https://data-collection-voice-backend.onrender.com/audio/files").then((res) => {
-            setRecordedFiles(res.data);
-        });
-    }, []);
-
-    // ✅ Handle JSON File Upload
+    // ✅ Handle User JSON Upload
     const handleJsonUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        setUserFile(file.name); // Save filename for reference
 
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
                 const data = JSON.parse(event.target.result);
-                await axios.post("https://data-collection-voice-backend.onrender.com/texts/upload", { texts: data });
-
                 setTexts(data);
                 setCurrentText(data.length > 0 ? data[0] : null);
 
-                console.log("✅ JSON Uploaded Successfully:", data);
+                console.log(`✅ Uploaded JSON: ${file.name}`, data);
             } catch (error) {
                 console.error("❌ Invalid JSON file:", error);
                 alert("⚠ Invalid JSON format. Please check the file.");
@@ -55,7 +42,6 @@ const Recorder = () => {
             const audioDataset = await folderHandle.current.getDirectoryHandle("AudioDataset", { create: true });
             await audioDataset.getDirectoryHandle("Voice Dataset", { create: true });
 
-            setFolderCreated(true);
             console.log("✅ Folder created: AudioDataset/Voice Dataset");
         } catch (error) {
             console.error("❌ Folder creation failed:", error);
@@ -113,7 +99,6 @@ const Recorder = () => {
             console.error("❌ Error saving file:", error);
         }
 
-        await axios.delete("https://data-collection-voice-backend.onrender.com/texts/remove-first");
         setTexts((prev) => prev.slice(1));
         setCurrentText(texts[1]);
 
@@ -125,11 +110,12 @@ const Recorder = () => {
             <h1>🎤 Voice Recorder</h1>
 
             {/* ✅ Create Folder Button */}
-            <button onClick={createFolder} disabled={folderCreated}>📂 Create Folder</button>
-            {folderCreated && <p>✅ Folder Created: `AudioDataset/Voice Dataset`</p>}
+            <button onClick={createFolder}>📂 Create Folder</button>
 
             {/* ✅ JSON Upload Input */}
             <input type="file" accept=".json" onChange={handleJsonUpload} />
+            {userFile && <p>✅ Loaded: {userFile}</p>}
+
             {texts.length === 0 && <p>⚠ No file uploaded</p>}
 
             {currentText ? <p>📝 {currentText.Text}</p> : <p>✅ All recordings completed!</p>}
@@ -143,15 +129,6 @@ const Recorder = () => {
                     <audio controls src={audioUrl}></audio>
                     <button onClick={saveRecording}>💾 Save Recording</button>
                 </>
-            )}
-
-            <h2>🎵 Recorded Files</h2>
-            {recordedFiles.length > 0 ? (
-                recordedFiles.map((file, index) => (
-                    <p key={index}>🔊 {file} ▶️</p>
-                ))
-            ) : (
-                <p>(No recordings yet)</p>
             )}
         </div>
     );
